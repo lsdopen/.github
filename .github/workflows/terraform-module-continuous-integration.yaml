@@ -22,31 +22,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Read .terraform-version
+      - name: Read Terraform Version
         run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2.0.3
         with:
           terraform_version: ${{ env.TF_VERSION }}
           cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
-      - name: Terraform Format
+      - name: Check Terraform Format
         run: terraform fmt -check
+      - name: Check Terraform Syntax
+        run: terraform init && terraform validate
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v3
-      - name: Run TFLint
+      - name: Check Terraform Lint
         run: tflint --init && tflint -f compact
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: Terraform init
-        run: terraform init
-      - name: TFSec
+      - name: Check Terraform Security (TFsec)
         uses: aquasecurity/tfsec-action@v1.0.3
-      - name: Set up Python 3.8 for Checkov
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.8
-      - name: Checkov
-        uses: bridgecrewio/checkov-action@master
+      - name: Check Terraform Security (Checkov)
+        uses: bridgecrewio/checkov-action@v12
         with:
           directory: .
           framework: terraform
