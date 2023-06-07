@@ -6,6 +6,7 @@
         "Terraform"
     ],
     "filePatterns": [
-        ".releaserc"
+        ".releaserc",
+        "*.tf"
     ]
 }
