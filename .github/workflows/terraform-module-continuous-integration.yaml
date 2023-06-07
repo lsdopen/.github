@@ -2,10 +2,6 @@ name: 'Continuous Integration'
 
 on:
   workflow_call:
-    secrets:
-      terraform-registry-token:
-        description: '(Optional) The Terraform registry token to authenticate module downloads.'
-        required: false
 
 permissions:
   id-token: write
@@ -28,7 +24,6 @@ jobs:
         uses: hashicorp/setup-terraform@v2.0.3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-          cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
       - name: Check Terraform Format
         run: terraform fmt -check
       - name: Check Terraform Syntax
