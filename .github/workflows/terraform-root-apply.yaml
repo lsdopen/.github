@@ -26,7 +26,7 @@ jobs:
     steps:
       - name: Sanity check
         if: github.ref != 'refs/heads/main'
-        run: echo "Not running against `main` branch, exiting." && exit 1
+        run: echo "Not running against 'main' branch, exiting." && exit 1
       - name: Checkout
         uses: actions/checkout@v3
       - name: Configure AWS Credentials
