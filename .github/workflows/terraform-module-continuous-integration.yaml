@@ -1,0 +1,54 @@
+name: 'Continuous Integration'
+
+on:
+  workflow_call:
+    secrets:
+      terraform-registry-token:
+        description: '(Optional) The Terraform registry token to authenticate module downloads.'
+        required: false
+
+permissions:
+  id-token: write
+  issues: write
+  pull-requests: write
+  contents: write
+
+jobs:
+  continuous-integration:
+    name: 'Continuous Integration'
+    runs-on: ubuntu-latest
+    env:
+      TF_IN_AUTOMATION: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Read .terraform-version
+        run: |
+          VER=$(cat VERSION)
+          echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2.0.3
+        with:
+          terraform_version: {{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
+      - name: Terraform Format
+        run: terraform fmt -check
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v3
+      - name: Run TFLint
+        run: tflint --init && tflint -f compact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Terraform init
+        run: terraform init
+      - name: TFSec
+        uses: aquasecurity/tfsec-action@v1.0.3
+      - name: Set up Python 3.8 for Checkov
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform
