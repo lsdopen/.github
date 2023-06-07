@@ -1,0 +1,11 @@
+{
+    "name": "Terraform Module Semantic Release Organization Workflow",
+    "description": "Terraform Module Semantic Release Organization Workflow.",
+    "iconName": "octicon feed-tag",
+    "categories": [
+        "Terraform"
+    ],
+    "filePatterns": [
+        ".releaserc"
+    ]
+}
