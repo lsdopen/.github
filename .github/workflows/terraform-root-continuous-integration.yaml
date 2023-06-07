@@ -1,0 +1,57 @@
+name: 'Continuous Integration'
+
+on:
+  workflow_call:
+    secrets:
+      aws-assume-role-arn:
+        description: 'The AWS Role ARN to assume for Terraform operations.'
+        required: true
+      aws-assume-role-region:
+        description: 'The AWS region to assume IAM in for Terraform operations.'
+        required: false
+      terraform-registry-token:
+        description: 'Terraform registry token to authorize Terraform operations.'
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  continuous-integration:
+    name: 'Continuous Integration'
+    runs-on: ubuntu-latest
+    env:
+      TF_IN_AUTOMATION: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Read Terraform Version
+        run: echo 'TF_VERSION=$(cat .terraform-version)' >> $GITHUB_ENV
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.aws-assume-role-arn }}
+          aws-region: ${{ secrets.aws-assume-role-region }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2.0.3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
+      - name: Check Terraform Format
+        run: terraform fmt -check
+      - name: Check Terraform Syntax
+        run: terraform init && terraform validate
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v3
+      - name: Check Terraform Lint
+        run: tflint --init && tflint -f compact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Check Terraform Security (TFsec)
+        uses: aquasecurity/tfsec-action@v1.0.3
+      - name: Check Terraform Security (Checkov)
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          framework: terraform
