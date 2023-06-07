@@ -5,7 +5,7 @@ on:
     secrets:
       aws-assume-role-arn:
         description: "The AWS Role ARN to assume for Terraform operations."
-        required: false
+        required: true
       aws-assume-role-region:
         description: "The AWS region to assume IAM in for Terraform operations."
         required: false
