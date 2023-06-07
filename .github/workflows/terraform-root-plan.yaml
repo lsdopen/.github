@@ -4,13 +4,13 @@ on:
   workflow_call:
     secrets:
       aws-assume-role-arn:
-        description: "The AWS Role ARN to assume for Terraform operations."
+        description: 'The AWS Role ARN to assume for Terraform operations.'
         required: true
       aws-assume-role-region:
-        description: "The AWS region to assume IAM in for Terraform operations."
+        description: 'The AWS region to assume IAM in for Terraform operations.'
         required: false
       terraform-registry-token:
-        description: "Terraform registry token to authorize Terraform operations."
+        description: 'Terraform registry token to authorize Terraform operations.'
         required: false
 
 permissions:
@@ -32,7 +32,7 @@ jobs:
           role-to-assume: ${{ secrets.aws-assume-role-arn }}
           aws-region: ${{ secrets.aws-assume-role-region }}
       - name: Read Terraform Version
-        run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
+        run: echo 'TF_VERSION=$(cat .terraform-version)' >> $GITHUB_ENV
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2.0.3
         with:

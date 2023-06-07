@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Read Terraform Version
-        run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
+        run: echo 'TF_VERSION=$(cat .terraform-version)' >> $GITHUB_ENV
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2.0.3
         with:
