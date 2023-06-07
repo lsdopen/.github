@@ -1,0 +1,50 @@
+name: 'Terraform Apply'
+
+on:
+  workflow_call:
+    secrets:
+      aws-assume-role-arn:
+        description: "The AWS Role ARN to assume for Terraform operations."
+        required: false
+      aws-assume-role-region:
+        description: "The AWS region to assume IAM in for Terraform operations."
+        required: false
+      terraform-registry-token:
+        description: "Terraform registry token to authorize Terraform operations."
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform-apply:
+    name: 'Terraform Apply'
+    runs-on: ubuntu-latest
+    env:
+      TF_IN_AUTOMATION: true
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Sanity check
+        if: github.ref != 'refs/heads/main'
+        run: echo "Not running against `main` branch, exiting." && exit 1
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.aws-assume-role-arn }}
+          aws-region: ${{ secrets.aws-assume-role-region }}
+      - name: Read Terraform Version
+        run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2.0.3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
+      - name: Initialize Terraform
+        run: terraform init
+      - name: Terraform Plan
+        run: terraform plan -out=tf.plan -input=false
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -input=false tf.plan
