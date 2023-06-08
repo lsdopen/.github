@@ -26,7 +26,7 @@ permissions:
 jobs:
   terraform-plan:
     name: 'Terraform Plan'
-    runs-on: github.event.inputs.runs-on
+    runs-on: ${{ github.event.inputs.runs-on }}
     env:
       TF_IN_AUTOMATION: true
     steps:
