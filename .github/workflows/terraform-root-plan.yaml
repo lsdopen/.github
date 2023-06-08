@@ -18,8 +18,8 @@ on:
       terraform-registry-token:
         description: 'Terraform registry token to authorize Terraform operations.'
         required: false
-      terraform-vars:
-        description: 'Line seperated terraform vars to inject into Terraform operations.'
+      terraform-env-vars:
+        description: 'Environment variables to inject into Terraform operations.'
         required: false
 
 permissions:
@@ -48,6 +48,6 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
       - name: Initialize Terraform
-        run: ${{ secrets.terraform-vars }} terraform init
+        run: ${{ secrets.terraform-env-vars }} terraform init
       - name: Terraform Plan
-        run: ${{ secrets.terraform-vars }} terraform plan -input=false
+        run: ${{ secrets.terraform-env-vars }} terraform plan -input=false
