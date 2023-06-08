@@ -41,12 +41,14 @@ jobs:
           role-to-assume: ${{ secrets.aws-assume-role-arn }}
           aws-region: ${{ secrets.aws-assume-role-region }}
       - name: Read Terraform Version
-        run: echo 'TF_VERSION=$(cat .terraform-version)' >> $GITHUB_ENV
+        run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2.0.3
         with:
           terraform_version: ${{ env.TF_VERSION }}
           cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
+      - name: Terraform version
+        run: terraform version
       - name: Initialize Terraform
         run: ${{ secrets.terraform-env-vars }} terraform init
       - name: Terraform Plan
