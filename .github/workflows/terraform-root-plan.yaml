@@ -47,9 +47,7 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
           cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
-      - name: Terraform version
-        run: terraform version
       - name: Initialize Terraform
-        run: ${{ secrets.terraform-env-vars }} terraform init
+        run: "${{ secrets.terraform-env-vars }} terraform init"
       - name: Terraform Plan
         run: ${{ secrets.terraform-env-vars }} terraform plan -input=false
