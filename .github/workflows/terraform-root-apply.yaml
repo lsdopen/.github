@@ -18,6 +18,9 @@ on:
       terraform-registry-token:
         description: 'Terraform registry token to authorize Terraform operations.'
         required: false
+      terraform-env-vars:
+        description: 'Environment variables to inject into Terraform operations.'
+        required: false
 
 permissions:
   id-token: write
@@ -50,4 +53,4 @@ jobs:
       - name: Initialize Terraform
         run: terraform init
       - name: Terraform Apply
-        run: terraform apply -auto-approve -input=false
+        run: ${{ secrets.terraform-env-vars }} terraform apply -auto-approve -input=false

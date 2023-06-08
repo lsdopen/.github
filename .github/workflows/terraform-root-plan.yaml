@@ -50,4 +50,4 @@ jobs:
       - name: Initialize Terraform
         run: terraform init
       - name: Terraform Plan
-        run: "${{ secrets.terraform-env-vars }} terraform plan -input=false"
+        run: ${{ secrets.terraform-env-vars }} terraform plan -input=false
