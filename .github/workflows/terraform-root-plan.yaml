@@ -5,7 +5,7 @@ on:
     inputs:
       runs-on:
         description: 'Agent selection string.'
-        required: true
+        required: false
         default: 'ubuntu-latest'
         type: string
     secrets:
