@@ -2,6 +2,12 @@ name: 'Continuous Integration'
 
 on:
   workflow_call:
+    inputs:
+      runs-on:
+        description: 'Agent selection string.'
+        required: false
+        default: 'ubuntu-latest'
+        type: string
 
 permissions:
   id-token: write
@@ -12,7 +18,7 @@ permissions:
 jobs:
   continuous-integration:
     name: 'Continuous Integration'
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on }}
     env:
       TF_IN_AUTOMATION: true
     steps:

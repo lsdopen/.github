@@ -3,6 +3,11 @@ name: 'Terraform Destroy'
 on:
   workflow_call:
     inputs:
+      runs-on:
+        description: 'Agent selection string.'
+        required: false
+        default: 'ubuntu-latest'
+        type: string
       confirm:
         description: 'Confirm deletion of Terraform managed resources?'
         required: true
@@ -26,12 +31,12 @@ permissions:
 jobs:
   terraform-destroy:
     name: 'Terraform Destroy'
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on }}
     env:
       TF_IN_AUTOMATION: true
     steps:
       - name: Sanity check
-        if: github.ref != 'refs/heads/main' || github.event.inputs.confirm != 'true'
+        if: github.ref != 'refs/heads/main' || inputs.confirm != 'true'
         run: echo 'Not running against 'main' branch or the action has not been confirmed, exiting.' && exit 1
       - name: Checkout
         uses: actions/checkout@v3
