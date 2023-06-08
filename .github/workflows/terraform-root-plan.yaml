@@ -32,7 +32,6 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     env:
       TF_IN_AUTOMATION: true
-      TF_VARS: ${{ secrets.terraform-vars }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -44,9 +43,7 @@ jobs:
       - name: Read Terraform Version
         run: echo 'TF_VERSION=$(cat .terraform-version)' >> $GITHUB_ENV
       - name: Map Terraform secrets to Variables
-        run: echo ${{ secrets.TF_VARS }} >> $GITHUB_ENV
-      - name: Map Nonsense to Variables
-        run: echo Runs-on=${{ secrets.aws-assume-role-arn }} >> $GITHUB_ENV
+        run: echo ${{ secrets.terraform-vars }} >> $GITHUB_ENV
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2.0.3
         with:
