@@ -21,6 +21,7 @@ on:
       terraform-vars:
         description: 'Line seperated terraform vars to inject into Terraform operations.'
         required: false
+        default: ''
 
 permissions:
   id-token: write
@@ -30,7 +31,9 @@ jobs:
   terraform-plan:
     name: 'Terraform Plan'
     runs-on: ${{ inputs.runs-on }}
-    env: ${{ secrets.terraform-vars }}
+    env:
+      TF_IN_AUTOMATION: true
+      TF_VARS: ${{ secrets.terraform-vars }}
 
     steps:
       - name: Checkout
