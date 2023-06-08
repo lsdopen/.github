@@ -14,7 +14,7 @@ on:
         required: true
       aws-assume-role-region:
         description: 'The AWS region to assume IAM in for Terraform operations.'
-        required: false
+        required: true
       terraform-registry-token:
         description: 'Terraform registry token to authorize Terraform operations.'
         required: false
