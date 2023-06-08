@@ -21,7 +21,6 @@ on:
       terraform-vars:
         description: 'Line seperated terraform vars to inject into Terraform operations.'
         required: false
-        default: ''
 
 permissions:
   id-token: write
