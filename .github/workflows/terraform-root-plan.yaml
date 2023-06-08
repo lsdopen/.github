@@ -2,6 +2,12 @@ name: 'Terraform Plan'
 
 on:
   workflow_call:
+    inputs:
+      runs-on:
+        description: 'Agent selection string.'
+        required: true
+        default: 'ubuntu-latest'
+        type: string
     secrets:
       aws-assume-role-arn:
         description: 'The AWS Role ARN to assume for Terraform operations.'
@@ -20,7 +26,7 @@ permissions:
 jobs:
   terraform-plan:
     name: 'Terraform Plan'
-    runs-on: ubuntu-latest
+    runs-on: github.event.inputs.runs-on
     env:
       TF_IN_AUTOMATION: true
     steps:
