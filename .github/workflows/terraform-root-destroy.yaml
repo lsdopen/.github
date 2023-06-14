@@ -43,13 +43,13 @@ jobs:
         run: echo 'Not running against 'main' branch or the action has not been confirmed, exiting.' && exit 1
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Read Terraform Version
+        run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets.aws-assume-role-arn }}
           aws-region: ${{ secrets.aws-assume-role-region }}
-      - name: Read Terraform Version
-        run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2.0.3
         with:
