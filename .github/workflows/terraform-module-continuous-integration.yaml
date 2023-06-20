@@ -24,12 +24,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Read Terraform Version
-        run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2.0.3
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
       - name: Check Terraform Format
         run: terraform fmt -check
       - name: Check Terraform Syntax
