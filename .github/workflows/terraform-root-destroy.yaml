@@ -42,7 +42,7 @@ jobs:
         if: github.ref != 'refs/heads/main' || inputs.confirm != 'true'
         run: echo 'Not running against 'main' branch or the action has not been confirmed, exiting.' && exit 1
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Read Terraform Version
         run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
       - name: Configure AWS Credentials
