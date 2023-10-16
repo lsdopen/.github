@@ -30,11 +30,7 @@ jobs:
         with:
           branches: |
             [
-              "main",
-              {
-                "name": "develop",
-                "prerelease": true
-              }
+              "main"
             ]
           plugins: |
             [
