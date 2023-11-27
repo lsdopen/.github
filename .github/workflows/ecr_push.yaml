@@ -1,0 +1,70 @@
+name: AWS ECR Push
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: 'Agent selection string.'
+        required: false
+        default: 'ubuntu-latest'
+        type: string
+    secrets:
+      aws-assume-role-arn:
+        description: 'The AWS Role ARN to assume for AWS operations.'
+        required: true
+      aws-assume-role-region:
+        description: 'The AWS region to assume IAM in for AWS operations.'
+        required: true
+      aws-ecr-repository-arn:
+        description: 'The AWS ECR repository ARN.'
+        required: true
+
+jobs:
+  deploy:
+    name: 'Push to ECR'
+    runs-on: ${{ inputs.runs-on }}
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: ${{ secrets.aws-assume-role-arn }}
+        aws-region: ${{ secrets.aws-assume-role-region }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v3
+      with:
+        images: ${{ secrets.aws-ecr-repository-arn }}
+        tags: |
+          type=schedule,pattern=latest
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          type=ref,event=branch
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        platforms: linux/amd64,linux/arm64
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
