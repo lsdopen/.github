@@ -15,8 +15,8 @@ on:
       aws-assume-role-region:
         description: 'The AWS region to assume IAM in for AWS operations.'
         required: true
-      aws-ecr-repository-arn:
-        description: 'The AWS ECR repository ARN.'
+      aws-ecr-repository-uri:
+        description: 'The AWS ECR repository URI.'
         required: true
 
 jobs:
@@ -55,10 +55,7 @@ jobs:
         images: ${{ secrets.aws-ecr-repository-arn }}
         tags: |
           type=schedule,pattern=latest
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=semver,pattern={{major}}
-          type=ref,event=branch
+          type=sha
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v2
