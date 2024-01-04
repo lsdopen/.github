@@ -47,8 +47,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.aws-assume-role-arn }}
-          aws-region: ${{ vars.aws-assume-role-region }}
+          role-to-assume: ${{ inputs.aws-assume-role-arn }}
+          aws-region: ${{ inputs.aws-assume-role-region }}
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3.0.0
         with:
