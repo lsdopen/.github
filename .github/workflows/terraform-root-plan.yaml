@@ -8,13 +8,15 @@ on:
         required: false
         default: 'ubuntu-latest'
         type: string
-    secrets:
       aws-assume-role-arn:
         description: 'The AWS Role ARN to assume for Terraform operations.'
         required: true
+        type: string
       aws-assume-role-region:
         description: 'The AWS region to assume IAM in for Terraform operations.'
         required: true
+        type: string
+    secrets:
       terraform-registry-token:
         description: 'Terraform registry token to authorize Terraform operations.'
         required: false
@@ -40,8 +42,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.aws-assume-role-arn }}
-          aws-region: ${{ secrets.aws-assume-role-region }}
+          role-to-assume: ${{ vars.aws-assume-role-arn }}
+          aws-region: ${{ vars.aws-assume-role-region }}
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3.0.0
         with:

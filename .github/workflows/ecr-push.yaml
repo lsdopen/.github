@@ -8,16 +8,18 @@ on:
         required: false
         default: 'ubuntu-latest'
         type: string
-    secrets:
       aws-assume-role-arn:
-        description: 'The AWS Role ARN to assume for AWS operations.'
+        description: 'The AWS Role ARN to assume for Terraform operations.'
         required: true
+        type: string
       aws-assume-role-region:
-        description: 'The AWS region to assume IAM in for AWS operations.'
+        description: 'The AWS region to assume IAM in for Terraform operations.'
         required: true
+        type: string
       aws-ecr-repository-uri:
         description: 'The AWS ECR repository URI.'
         required: true
+        type: string
 
 jobs:
   deploy:
@@ -41,8 +43,8 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: ${{ secrets.aws-assume-role-arn }}
-        aws-region: ${{ secrets.aws-assume-role-region }}
+        role-to-assume: ${{ vars.aws-assume-role-arn }}
+        aws-region: ${{ vars.aws-assume-role-region }}
 
     - name: Login to Amazon ECR
       id: login-ecr
@@ -52,7 +54,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ secrets.aws-ecr-repository-uri }}
+        images: ${{ vars.aws-ecr-repository-uri }}
         tags: |
           type=schedule,pattern=latest
           type=sha
