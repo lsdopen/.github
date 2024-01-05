@@ -23,6 +23,15 @@ on:
       terraform-env-vars:
         description: 'Environment variables to inject into Terraform operations.'
         required: false
+      tailscale-client-id:
+        description: 'Your Tailscale OAuth Client ID.'
+        required: false
+      tailscale-secret:
+        description: 'Your Tailscale OAuth Client Secret.'
+        required: false
+      tailscale-tags:
+        description: 'Comma separated list of Tags to be applied to nodes. The OAuth client must have permission to apply these tags.'
+        required: false
 
 permissions:
   id-token: write
@@ -54,5 +63,12 @@ jobs:
           cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
       - name: Initialize Terraform
         run: terraform init
+      - name: Tailscale
+        if: secrets.tailscale-client-id != null && secrets.tailscale-secret != null && secrets.tailscale-tags != null
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.tailscale-client-id }}
+          oauth-secret: ${{ secrets.tailscale-secret }}
+          tags: ${{ secrets.tailscale-tags }}
       - name: Terraform Apply
         run: ${{ secrets.terraform-env-vars }} terraform apply -auto-approve -input=false
