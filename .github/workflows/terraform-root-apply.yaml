@@ -64,7 +64,7 @@ jobs:
       - name: Initialize Terraform
         run: terraform init
       - name: Tailscale
-        if: secrets.tailscale-client-id != null && secrets.tailscale-secret != null && secrets.tailscale-tags != null
+        if: ${{ secrets.tailscale-client-id != null && secrets.tailscale-secret != null && secrets.tailscale-tags != null }}
         uses: tailscale/github-action@v2
         with:
           oauth-client-id: ${{ secrets.tailscale-client-id }}
