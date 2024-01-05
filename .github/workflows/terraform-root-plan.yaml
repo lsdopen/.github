@@ -16,6 +16,11 @@ on:
         description: 'The AWS region to assume IAM in for Terraform operations.'
         required: true
         type: string
+      tailscale:
+        description: 'Should the job connect to Tailscale.'
+        required: false
+        type: boolean
+        default: false
     secrets:
       terraform-registry-token:
         description: 'Terraform registry token to authorize Terraform operations.'
@@ -61,7 +66,7 @@ jobs:
       - name: Initialize Terraform
         run: terraform init
       - name: Tailscale
-        if: ${{ secrets.tailscale-client-id != null && secrets.tailscale-secret != null && secrets.tailscale-tags != null }}
+        if: inputs.tailscale == true
         uses: tailscale/github-action@v2
         with:
           oauth-client-id: ${{ secrets.tailscale-client-id }}
