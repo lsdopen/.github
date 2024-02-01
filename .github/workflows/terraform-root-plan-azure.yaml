@@ -8,16 +8,8 @@ on:
         required: false
         default: 'ubuntu-latest'
         type: string
-      client-id:
-        description: 'Application (client) ID'
-        required: true
-        type: string
-      tenant-id:
-        description: 'Directory (tenant) ID'
-        required: true
-        type: string
-      subscription-id:
-        description: 'Subscription ID'
+      creds:
+        description: 'Azure Credentials.'
         required: true
         type: string
       tailscale:
