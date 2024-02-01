@@ -1,0 +1,81 @@
+name: 'Terraform Plan'
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: 'Agent selection string.'
+        required: false
+        default: 'ubuntu-latest'
+        type: string
+      client-id:
+        description: 'Application (client) ID'
+        required: true
+        type: string
+      tenant-id:
+        description: 'Directory (tenant) ID'
+        required: true
+        type: string
+      subscription-id:
+        description: 'Subscription ID'
+        required: true
+        type: string
+      tailscale:
+        description: 'Should the job connect to Tailscale.'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      terraform-registry-token:
+        description: 'Terraform registry token to authorize Terraform operations.'
+        required: false
+      terraform-env-vars:
+        description: 'Environment variables to inject into Terraform operations.'
+        required: false
+      tailscale-client-id:
+        description: 'Your Tailscale OAuth Client ID.'
+        required: false
+      tailscale-secret:
+        description: 'Your Tailscale OAuth Client Secret.'
+        required: false
+      tailscale-tags:
+        description: 'Comma separated list of Tags to be applied to nodes. The OAuth client must have permission to apply these tags.'
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform-plan:
+    name: 'Terraform Plan'
+    runs-on: ${{ inputs.runs-on }}
+    env:
+      TF_IN_AUTOMATION: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Read Terraform Version
+        run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
+      - name: Configure Azure Credentials
+        uses: azure/login@v1
+        with:
+          client-id: ${{ inputs.client-id }}
+          tenant-id: ${{ inputs.tenant-id}}
+          subscription-id: ${{ inputs.subscription-id }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3.0.0
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
+      - name: Initialize Terraform
+        run: terraform init
+      - name: Tailscale
+        if: inputs.tailscale == true
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.tailscale-client-id }}
+          oauth-secret: ${{ secrets.tailscale-secret }}
+          tags: ${{ secrets.tailscale-tags }}
+      - name: Terraform Plan
+        run: ${{ secrets.terraform-env-vars }} terraform plan -input=false
