@@ -1,4 +1,4 @@
-name: 'Terraform Apply'
+name: 'Terraform Destroy'
 
 on:
   workflow_call:
@@ -7,6 +7,11 @@ on:
         description: 'Agent selection string.'
         required: false
         default: 'ubuntu-latest'
+        type: string
+      confirm:
+        description: 'Confirm deletion of Terraform managed resources?'
+        required: true
+        default: 'false'
         type: string
       tailscale:
         description: 'Should the job connect to Tailscale.'
@@ -44,8 +49,8 @@ permissions:
   contents: read
 
 jobs:
-  terraform-apply:
-    name: 'Terraform Apply'
+  terraform-destroy:
+    name: 'Terraform Destroy'
     runs-on: ${{ inputs.runs-on }}
     env:
       TF_IN_AUTOMATION: true
@@ -55,8 +60,8 @@ jobs:
       TF_VAR_use_oidc: true
     steps:
       - name: Sanity check
-        if: github.ref != 'refs/heads/main'
-        run: echo 'Not running against 'main' branch, exiting.' && exit 1
+        if: github.ref != 'refs/heads/main' || inputs.confirm != 'true'
+        run: echo 'Not running against 'main' branch or the action has not been confirmed, exiting.' && exit 1
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -81,5 +86,5 @@ jobs:
           oauth-secret: ${{ secrets.tailscale-secret }}
           tags: ${{ secrets.tailscale-tags }}
 
-      - name: Terraform Apply
-        run: ${{ secrets.terraform-env-vars }} terraform apply -auto-approve -input=false
+      - name: Terraform Destroy
+        run: ${{ secrets.terraform-env-vars }} terraform destroy -auto-approve -input=false
