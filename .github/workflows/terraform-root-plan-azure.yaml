@@ -8,10 +8,6 @@ on:
         required: false
         default: 'ubuntu-latest'
         type: string
-      creds:
-        description: 'Azure Credentials.'
-        required: true
-        type: string
       tailscale:
         description: 'Should the job connect to Tailscale.'
         required: false
@@ -33,6 +29,15 @@ on:
       tailscale-tags:
         description: 'Comma separated list of Tags to be applied to nodes. The OAuth client must have permission to apply these tags.'
         required: false
+      azure-client-id:
+        description: 'Azure Client ID.'
+        required: true
+      azure-tenant-id:
+        description: 'Azure Tenant ID.'
+        required: true
+      azure-subscription-id:
+        description: 'Azure Subscription ID.'
+        required: true
 
 permissions:
   id-token: write
@@ -44,22 +49,26 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     env:
       TF_IN_AUTOMATION: true
+      ARM_CLIENT_ID: "${{ secrets.azure-client-id }}"
+      ARM_SUBSCRIPTION_ID: "${{ secrets.azure-subscription-id }}"
+      ARM_TENANT_ID: "${{ secrets.azure-tenant-id }}"
+      TF_VAR_use_oidc: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Read Terraform Version
         run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
-      - name: Configure Azure Credentials
-        uses: azure/login@v1
-        with:
-          creds: ${{ inputs.creds }}
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3.0.0
         with:
           terraform_version: ${{ env.TF_VERSION }}
           cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
+
       - name: Initialize Terraform
-        run: terraform init
+        run: terraform init -backend-config="use_oidc=true"
+
       - name: Tailscale
         if: inputs.tailscale == true
         uses: tailscale/github-action@v2
@@ -67,5 +76,6 @@ jobs:
           oauth-client-id: ${{ secrets.tailscale-client-id }}
           oauth-secret: ${{ secrets.tailscale-secret }}
           tags: ${{ secrets.tailscale-tags }}
+
       - name: Terraform Plan
         run: ${{ secrets.terraform-env-vars }} terraform plan -input=false
