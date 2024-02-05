@@ -82,4 +82,4 @@ jobs:
           tags: ${{ secrets.tailscale-tags }}
 
       - name: Terraform Apply
-        run: ${{ secrets.terraform-env-vars }} terraform apply -input=false
+        run: ${{ secrets.terraform-env-vars }} terraform apply -auto-approve -input=false
