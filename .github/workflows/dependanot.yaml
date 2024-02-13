@@ -8,8 +8,8 @@ on:
         required: true
 
 permissions:
+  contents: write
   pull-requests: write
-  contents: read
 
 jobs:
   dependanot:
@@ -31,7 +31,6 @@ jobs:
 
       - name: Generate updatecli.yaml
         env:
-          GITHUB_TOKEN: "${{ secrets.github-token }}"
           REPOSITORY_NAME: "${{ github.repository }}"
         run: |
           cat *.tf > combined.tf
@@ -79,5 +78,4 @@ jobs:
       - name: Run Updatecli
         env:
           GITHUB_TOKEN: "${{ secrets.github-token }}"
-          REPOSITORY_NAME: "${{ github.repository }}"
         run: "updatecli apply"
