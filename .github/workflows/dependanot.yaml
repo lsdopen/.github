@@ -73,6 +73,7 @@ jobs:
               spec:\
                 title: "Dependanot"
           }' updatecli.yaml
+          cat updatecli.yaml
 
       - name: Run Updatecli
         env:
