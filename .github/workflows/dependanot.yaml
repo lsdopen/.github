@@ -72,8 +72,6 @@ jobs:
               spec:\
                 title: "Dependanot"
           }' updatecli.yaml
-          cat updatecli.yaml
-          echo "$GITHUB_TOKEN"
 
       - name: Run Updatecli
         env:
