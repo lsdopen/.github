@@ -6,7 +6,6 @@ on:
       github-token:
         description: 'The GitHub token needed by UpdateCLI to create the PR.'
         required: true
-        type: string
 
 permissions:
   pull-requests: write
