@@ -4,7 +4,7 @@ on:
   workflow_call:
     secrets:
       github-token:
-        description: 'The AWS Role ARN to assume for Terraform operations.'
+        description: 'The GitHub token needed by UpdateCLI to create the PR.'
         required: true
         type: string
 
@@ -77,6 +77,6 @@ jobs:
 
       - name: Run Updatecli
         env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GITHUB_TOKEN: "${{ secrets.github-token }}"
           REPOSITORY_NAME: "${{ github.repository }}"
         run: "updatecli apply"
