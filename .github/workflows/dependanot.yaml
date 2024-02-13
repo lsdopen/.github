@@ -1,0 +1,82 @@
+name: Dependanot
+
+on:
+  workflow_call:
+    secrets:
+      github-token:
+        description: 'The AWS Role ARN to assume for Terraform operations.'
+        required: true
+        type: string
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  dependanot:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Updatecli
+        uses: updatecli/updatecli-action@v2
+
+      - name: Install Requirements
+        run: |
+          wget https://github.com/tmccombs/hcl2json/releases/download/v0.6.1/hcl2json_linux_amd64 -O ./hcl2json
+          chmod +x ./hcl2json
+          sudo add-apt-repository ppa:rmescandon/yq
+          sudo apt update
+          sudo apt-get install jq yq -y
+
+      - name: Generate updatecli.yaml
+        env:
+          GITHUB_TOKEN: "${{ secrets.github-token }}"
+          REPOSITORY_NAME: "${{ github.repository }}"
+        run: |
+          cat *.tf > combined.tf
+          
+          ./hcl2json combined.tf > out.json
+          rm combined.tf
+          jq '.resource.helm_release' out.json > filtered.json
+          rm out.json
+          
+          jq 'map_values(. |= { "kind": "helmchart", "spec": { "url": .[0].repository, "name": .[0].chart } })' filtered.json > sources.json
+          jq 'to_entries | map({(.key): { "name": .key, "kind": "hcl", "sourceid": .key, "scmid": "default", "spec": { "file": "variables.tf", "path": ("locals." + .key + "_chart_version") } }}) | add'  filtered.json > targets.json
+          rm filtered.json
+          
+          jq -s '{ "name": "Terraform File","config": {},"sources": .[0], "targets": .[1] }' sources.json targets.json > combined.json
+          rm sources.json targets.json
+          jq -r . combined.json | yq eval -P > updatecli.yaml
+          rm combined.json
+          OWNER=$(echo "$REPOSITORY_NAME" | cut -d'/' -f1)
+          REPOSITORY=$(echo "$REPOSITORY_NAME" | cut -d'/' -f2)
+          sed -i '
+          /config: {}/ {
+            s/config: {}//
+            a\
+          scms:\
+            default:\
+              kind: github\
+              spec:\
+                user: "updatecli"\
+                email: "updatecli@example"\
+                owner: "'$OWNER'"\
+                repository: "'$REPOSITORY'"\
+                token: '\''{{ requiredEnv "GITHUB_TOKEN" }}'\''\
+                username: '\''UpdateCLI'\''\
+                branch: "main"\
+          actions:\
+            default:\
+              kind: "github/pullrequest"\
+              scmid: default\
+              spec:\
+                title: "Dependanot"
+          }' updatecli.yaml
+
+      - name: Run Updatecli
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          REPOSITORY_NAME: "${{ github.repository }}"
+        run: "updatecli apply"
