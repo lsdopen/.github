@@ -66,6 +66,7 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
           cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
+          terraform_wrapper: false
       - name: Initialize Terraform
         run: terraform init
       - name: Tailscale
