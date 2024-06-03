@@ -28,6 +28,8 @@ jobs:
       - name: Semantic Release
         uses: codfish/semantic-release-action@v3
         with:
+          branches: |
+            ['main']
           additional-packages: |
             [
               "conventional-changelog-conventionalcommits@8"
