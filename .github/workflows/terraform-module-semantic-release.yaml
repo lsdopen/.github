@@ -33,6 +33,7 @@ jobs:
           additional-packages: |
             [
               "@semantic-release/changelog@6.0.3"
+              "@semantic-release/git@10.0.1"
             ]
           plugins: |
             [
