@@ -26,17 +26,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Semantic Release
-        uses: docker://ghcr.io/codfish/semantic-release-action:v2
+        uses: docker://ghcr.io/codfish/semantic-release-action@sha256:71048986f7e28f024cbad0ef106a7ef20b9b0d322f3a8aa51d89f1c424e75061
         with:
           branches: |
             [
               "main"
             ]
+          additional-packages: |
+            [
+              "@semantic-release/changelog@6.0.3",
+              "@semantic-release/git@10.0.1"
+            ]
           plugins: |
             [
               "@semantic-release/commit-analyzer",
               "@semantic-release/release-notes-generator",
-              "@semantic-release/github"
+              "@semantic-release/changelog",
+              "@semantic-release/github",
+              "@semantic-release/git"
             ]
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
