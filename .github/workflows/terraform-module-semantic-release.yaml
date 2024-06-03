@@ -32,7 +32,7 @@ jobs:
             ['main']
           additional-packages: |
             [
-              "conventional-changelog-conventionalcommits@8"
+              "conventional-changelog-conventionalcommits@7"
             ]
           plugins: |
             [
