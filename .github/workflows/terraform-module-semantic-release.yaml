@@ -31,12 +31,13 @@ jobs:
           branches: |
             ['main']
           additional-packages: |
-            []
+            [
+              "@semantic-release/changelog@6.03"
+            ]
           plugins: |
             [
               "@semantic-release/commit-analyzer",
               "@semantic-release/release-notes-generator",
-              "@semantic-release/changelog",
               "@semantic-release/github"
             ]
         env:
