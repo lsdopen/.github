@@ -26,12 +26,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Semantic Release
-        uses: docker://ghcr.io/codfish/semantic-release-action:v2
+        uses: codfish/semantic-release-action@v3
         with:
-          branches: |
-            [
-              "main"
-            ]
           plugins: |
             [
               "@semantic-release/commit-analyzer",
