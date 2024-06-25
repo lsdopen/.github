@@ -30,6 +30,9 @@ on:
       terraform-registry-token:
         description: 'Terraform registry token to authorize Terraform operations.'
         required: false
+      terraform-env-vars:
+        description: 'Environment variables to inject into Terraform operations.'
+        required: false
       tailscale-client-id:
         description: 'Your Tailscale OAuth Client ID.'
         required: false
