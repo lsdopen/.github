@@ -23,7 +23,7 @@ jobs:
 
       - name: Install Requirements
         run: |
-          wget https://github.com/tmccombs/hcl2json/releases/download/v0.6.1/hcl2json_linux_amd64 -O ./hcl2json
+          wget https://github.com/tmccombs/hcl2json/releases/download/v0.6.1/hcl2json_linux_amd64 --quiet -O ./hcl2json
           chmod +x ./hcl2json
           sudo add-apt-repository ppa:rmescandon/yq
           sudo apt update
