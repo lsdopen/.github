@@ -37,7 +37,7 @@ jobs:
           
           ./hcl2json combined.tf > out.json
           rm combined.tf
-          jq '.resource.helm_release' out.json > filtered.json
+          jq '.resource.helm_release | with_entries(select(.value | map(select(.chart | startswith("$") | not)) | length > 0))' out.json > filtered.json
           rm out.json
           
           jq 'map_values(. |= { "kind": "helmchart", "spec": { "url": .[0].repository, "name": .[0].chart } })' filtered.json > sources.json
