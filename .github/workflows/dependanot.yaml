@@ -33,7 +33,7 @@ jobs:
         env:
           REPOSITORY_NAME: "${{ github.repository }}"
         run: |
-          cat *.tf > combined.tf
+          find . \( -path "./modules/*/*.tf" -o -path "./*.tf" \) -type f | grep -v "./combined.tf" | xargs cat > combined.tf
           
           ./hcl2json combined.tf > out.json
           rm combined.tf
