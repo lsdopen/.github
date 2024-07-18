@@ -69,7 +69,7 @@ jobs:
                 token: '\''{{ requiredEnv "GITHUB_TOKEN" }}'\''\
                 username: '\''UpdateCLI'\''\
                 branch: "main"\
-                commitmessage: "feat: dependanot, bump helm charts"
+                commitmessage: "feat: dependanot, bump helm charts"\
           actions:\
             default:\
               kind: "github/pullrequest"\
