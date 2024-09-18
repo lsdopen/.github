@@ -41,7 +41,9 @@ jobs:
           jq '.resource.helm_release | with_entries(select(.value | map(select(.chart | test("^[^.\\$]"))) | length > 0))' out.json > filtered.json
           rm out.json
           
-          jq 'map_values(. |= { "kind": "helmchart", "spec": { "url": .[0].repository, "name": .[0].chart } })' filtered.json > sources.json
+          jq 'map_values(. |= { "kind": "helmchart", "spec": { "url": .[0].repository, "name": .[0].chart } })' filtered.json > pre-sources.json
+          jq 'if .karpenter then .karpenter.spec.versionFilter = {"kind": "semver", "pattern": "<9999"} else . end' pre-sources.json > sources.json
+          rm pre-sources.json
           
           jq 'to_entries | map({(.key): { "name": .key, "kind": "hcl", "sourceid": .key, "scmid": "default", "spec": { "file": "variables.tf", "path": ("locals." + .key + "_chart_version") } }}) | add'  filtered.json > targets.json
           rm filtered.json
