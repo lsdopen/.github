@@ -19,11 +19,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Updatecli
-        uses: updatecli/updatecli-action@v2
+        uses: updatecli/updatecli-action@v2.67.0
 
       - name: Install Requirements
         run: |
-          wget https://github.com/tmccombs/hcl2json/releases/download/v0.6.1/hcl2json_linux_amd64 --quiet -O ./hcl2json
+          wget https://github.com/tmccombs/hcl2json/releases/download/v0.6.4/hcl2json_linux_amd64 --quiet -O ./hcl2json
           chmod +x ./hcl2json
           sudo add-apt-repository ppa:rmescandon/yq
           sudo apt update
@@ -67,7 +67,9 @@ jobs:
                 token: '\''{{ requiredEnv "GITHUB_TOKEN" }}'\''\
                 username: '\''UpdateCLI'\''\
                 branch: "main"\
-                commitmessage: "feat: dependanot, bump helm charts"\
+                commitmessage:\
+                  type: "feat"\
+                  title: "dependanot, bump helm charts"\
           actions:\
             default:\
               kind: "github/pullrequest"\
