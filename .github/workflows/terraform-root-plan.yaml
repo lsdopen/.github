@@ -73,5 +73,6 @@ jobs:
           oauth-client-id: ${{ secrets.tailscale-client-id }}
           oauth-secret: ${{ secrets.tailscale-secret }}
           tags: ${{ secrets.tailscale-tags }}
+          version: 1.78.1
       - name: Terraform Plan
         run: ${{ secrets.terraform-env-vars }} terraform plan -input=false
