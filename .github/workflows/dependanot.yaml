@@ -23,13 +23,12 @@ jobs:
 
       - name: Install Requirements
         run: |
-          echo $PATH
-          wget https://github.com/tmccombs/hcl2json/releases/download/v0.6.4/hcl2json_linux_amd64 --quiet -O ./hcl2json
-          chmod +x ./hcl2json
-          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
-          chmod +x /usr/bin/yq
-          wget https://github.com/jqlang/jq/releases/latest/download/jq-linux-amd64 -O /usr/bin/jq
-          chmod +x /usr/bin/jq
+          sudo wget https://github.com/tmccombs/hcl2json/releases/download/v0.6.4/hcl2json_linux_amd64 --quiet -O /usr/bin/hcl2json
+          sudo chmod +x /usr/bin/hcl2json
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 --quiet -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+          sudo wget https://github.com/jqlang/jq/releases/latest/download/jq-linux-amd64 --quiet -O /usr/bin/jq
+          sudo chmod +x /usr/bin/jq
 
       - name: Generate updatecli.yaml
         env:
@@ -37,7 +36,7 @@ jobs:
         run: |
           find . \( -path "./modules/*/*.tf" -o -path "./*.tf" \) -type f | grep -v "./combined.tf" | xargs cat > combined.tf
           
-          ./hcl2json combined.tf > out.json
+          hcl2json combined.tf > out.json
           rm combined.tf
           
           jq '.resource.helm_release | with_entries(select(.value | map(select(.chart | test("^[^.\\$]"))) | length > 0))' out.json > filtered.json
