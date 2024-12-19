@@ -23,11 +23,13 @@ jobs:
 
       - name: Install Requirements
         run: |
+          echo $PATH
           wget https://github.com/tmccombs/hcl2json/releases/download/v0.6.4/hcl2json_linux_amd64 --quiet -O ./hcl2json
           chmod +x ./hcl2json
-          sudo add-apt-repository ppa:rmescandon/yq
-          sudo apt update
-          sudo apt-get install jq yq -y
+          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          chmod +x /usr/bin/yq
+          wget https://github.com/jqlang/jq/releases/latest/download/jq-linux-amd64 -O /usr/bin/jq
+          chmod +x /usr/bin/jq
 
       - name: Generate updatecli.yaml
         env:
