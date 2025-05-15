@@ -3,6 +3,11 @@ name: 'Terraform Apply'
 on:
   workflow_call:
     inputs:
+      workflow:
+        description: 'Which workflow step to run.'
+        required: false
+        type: string
+        default: ''
       runs-on:
         description: 'Agent selection string.'
         required: false
@@ -45,6 +50,10 @@ permissions:
 jobs:
   terraform-apply:
     name: 'Terraform Apply'
+    defaults:
+      run:
+        shell: bash
+        working-directory: './${{ inputs.workflow }}'
     runs-on: ${{ inputs.runs-on }}
     env:
       TF_IN_AUTOMATION: true
