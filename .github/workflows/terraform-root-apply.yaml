@@ -85,5 +85,6 @@ jobs:
           oauth-client-id: ${{ secrets.tailscale-client-id }}
           oauth-secret: ${{ secrets.tailscale-secret }}
           tags: ${{ secrets.tailscale-tags }}
+          version: 1.82.5
       - name: Terraform Apply
         run: ${{ secrets.terraform-env-vars }} terraform apply -auto-approve -input=false
