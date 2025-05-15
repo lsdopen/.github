@@ -3,6 +3,11 @@ name: 'Terraform Plan'
 on:
   workflow_call:
     inputs:
+      workflow:
+        description: 'Which workflow step to run.'
+        required: false
+        type: string
+        default: ''
       runs-on:
         description: 'Agent selection string.'
         required: false
@@ -45,6 +50,10 @@ permissions:
 jobs:
   terraform-plan:
     name: 'Terraform Plan'
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ inputs.workflow && './${{ inputs.workflow }}' || './' }}
     runs-on: ${{ inputs.runs-on }}
     env:
       TF_IN_AUTOMATION: true
@@ -73,6 +82,6 @@ jobs:
           oauth-client-id: ${{ secrets.tailscale-client-id }}
           oauth-secret: ${{ secrets.tailscale-secret }}
           tags: ${{ secrets.tailscale-tags }}
-          version: 1.78.1
+          version: 1.82.5
       - name: Terraform Plan
         run: ${{ secrets.terraform-env-vars }} terraform plan -input=false
