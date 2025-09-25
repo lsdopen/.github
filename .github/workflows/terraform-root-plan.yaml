@@ -63,7 +63,7 @@ jobs:
       - name: Read Terraform Version
         run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ inputs.aws-assume-role-arn }}
           aws-region: ${{ inputs.aws-assume-role-region }}
