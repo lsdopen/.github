@@ -77,7 +77,7 @@ jobs:
         run: terraform init
       - name: Tailscale
         if: inputs.tailscale == true
-        uses: tailscale/github-action@v3
+        uses: tailscale/github-action@v4
         with:
           oauth-client-id: ${{ secrets.tailscale-client-id }}
           oauth-secret: ${{ secrets.tailscale-secret }}
