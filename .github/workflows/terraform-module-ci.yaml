@@ -5,7 +5,7 @@
 # Steps:
 #   1. Detects minimum Terraform version from versions.tf (uses the lowest allowed)
 #   2. Auto-formats code with `terraform fmt -recursive`
-#      - If changes are needed, commits the fix and stops (saves CI minutes)
+#      - If changes are needed, commits the fix with [skip ci] and continues
 #   3. Validates syntax with `terraform init` + `terraform validate`
 #   4. Lints with tflint using shared config from .github/terraform/tflint.hcl
 #
@@ -60,17 +60,11 @@ jobs:
         id: fmt-commit
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
-          commit_message: "chore: terraform format"
+          commit_message: "chore: terraform format [skip ci]"
           file_pattern: "*.tf"
           commit_user_name: "fmt-bot"
           commit_user_email: "actions@github.com"
           commit_author: "fmt-bot <actions@github.com>"
-
-      - name: Stop if formatting was applied
-        if: steps.fmt-commit.outputs.changes_detected == 'true'
-        run: |
-          echo "::notice::Formatting fixes committed. CI will re-run on the new commit."
-          exit 1
 
       - name: Check Terraform Syntax
         run: terraform init -backend=false && terraform validate
