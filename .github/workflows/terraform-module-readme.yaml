@@ -34,7 +34,10 @@ jobs:
       # Install terraform-docs (parses .tf files) and gomplate (renders template)
       - name: Install tools
         run: |
-          brew install terraform-docs gomplate
+          curl -sSLo /tmp/terraform-docs.tar.gz https://github.com/terraform-docs/terraform-docs/releases/latest/download/terraform-docs-v0.19.0-linux-amd64.tar.gz
+          tar -xzf /tmp/terraform-docs.tar.gz -C /usr/local/bin terraform-docs
+          curl -sSLo /usr/local/bin/gomplate https://github.com/hairyhenderson/gomplate/releases/latest/download/gomplate_linux-amd64
+          chmod +x /usr/local/bin/gomplate
 
       # Use local generate script if present, otherwise download the shared one
       - name: Generate README

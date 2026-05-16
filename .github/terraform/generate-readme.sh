@@ -88,5 +88,9 @@ fi
 export README_YAML="$DOCS_DIR/README.yaml"
 gomplate -d config="$DOCS_DIR/README.yaml" -f "$TEMPLATE" -o "./README.md"
 
-# Replace version placeholder
-sed -i '' "s/__VERSION__/$MODULE_VERSION/g" "./README.md"
+# Replace version placeholder (compatible with both macOS and Linux sed)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  sed -i '' "s/__VERSION__/$MODULE_VERSION/g" "./README.md"
+else
+  sed -i "s/__VERSION__/$MODULE_VERSION/g" "./README.md"
+fi
