@@ -1,0 +1,47 @@
+# Terraform Module — Semantic Release
+#
+# Reusable workflow for all Terraform modules. Called by each module's release.yml.
+#
+# Analyses conventional commit messages on push to main:
+#   - fix:  → patch bump (1.0.0 → 1.0.1)
+#   - feat: → minor bump (1.0.0 → 1.1.0)
+#   - feat!/BREAKING CHANGE: → major bump (1.0.0 → 2.0.0)
+#   - chore:/docs:/ci: → no release
+#
+# Creates a GitHub release with auto-generated changelog and tags the commit.
+name: 'Semantic Release'
+
+on:
+  workflow_call:
+
+permissions:
+  id-token: write
+  issues: write
+  pull-requests: write
+  contents: write
+
+jobs:
+  semantic-release:
+    name: 'Semantic Release'
+    runs-on: 'ubuntu-latest'
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Semantic Release
+        uses: docker://ghcr.io/codfish/semantic-release-action@sha256:4c0955361cf42e5ab9bb05df3a1e2a781c443f9760b63a68957689445051a2fb
+        with:
+          branches: |
+            [
+              "main"
+            ]
+          plugins: |
+            [
+              "@semantic-release/commit-analyzer",
+              "@semantic-release/release-notes-generator",
+              "@semantic-release/github",
+            ]
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

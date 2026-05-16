@@ -1,0 +1,88 @@
+# Terraform Module — Continuous Integration
+#
+# Reusable workflow for all Terraform modules. Called by each module's ci.yml.
+#
+# Steps:
+#   1. Detects minimum Terraform version from versions.tf (uses the lowest allowed)
+#   2. Auto-formats code with `terraform fmt -recursive`
+#      - If changes are needed, commits the fix and stops (saves CI minutes)
+#   3. Validates syntax with `terraform init` + `terraform validate`
+#   4. Lints with tflint using shared config from .github/terraform/tflint.hcl
+#
+# Overrides:
+#   - Place a .tflint.hcl in your module repo root to use custom lint rules
+#   - The shared config is only downloaded if no local .tflint.hcl exists
+name: 'Continuous Integration'
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: 'Agent selection string.'
+        required: false
+        default: 'ubuntu-latest'
+        type: string
+
+permissions:
+  id-token: write
+  issues: write
+  pull-requests: write
+  contents: write
+
+jobs:
+  continuous-integration:
+    name: 'Continuous Integration'
+    runs-on: ${{ inputs.runs-on }}
+    env:
+      TF_IN_AUTOMATION: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Detect minimum Terraform version
+        id: tf-version
+        run: |
+          version=$(grep -h required_version *.tf | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "::notice::Using Terraform $version (minimum from versions.tf)"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3.1.2
+        with:
+          terraform_version: ${{ steps.tf-version.outputs.version }}
+
+      - name: Terraform Format
+        run: terraform fmt -recursive
+
+      - name: Commit formatting fixes
+        id: fmt-commit
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "chore: terraform format"
+          file_pattern: "*.tf"
+          commit_user_name: "fmt-bot"
+          commit_user_email: "actions@github.com"
+          commit_author: "fmt-bot <actions@github.com>"
+
+      - name: Stop if formatting was applied
+        if: steps.fmt-commit.outputs.changes_detected == 'true'
+        run: |
+          echo "::notice::Formatting fixes committed. CI will re-run on the new commit."
+          exit 1
+
+      - name: Check Terraform Syntax
+        run: terraform init -backend=false && terraform validate
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v6
+
+      - name: Fetch shared tflint config
+        if: hashFiles('.tflint.hcl') == ''
+        run: curl -sL https://raw.githubusercontent.com/lsdopen/.github/main/.github/terraform/tflint.hcl -o .tflint.hcl
+
+      - name: Check Terraform Lint
+        run: tflint --init && tflint -f compact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

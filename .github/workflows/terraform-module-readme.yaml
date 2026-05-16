@@ -1,0 +1,66 @@
+# Terraform Module — README Generation
+#
+# Reusable workflow for all Terraform modules. Called by each module's readme.yml.
+#
+# Runs after a release is published. Regenerates README.md with:
+#   - Module metadata from docs/README.yaml
+#   - Auto-generated inputs/outputs/providers/resources tables via terraform-docs
+#   - Latest version tag injected into usage example
+#
+# Overrides:
+#   - Place a custom docs/generate-readme.sh in your repo to use your own generation logic
+#   - Place a custom docs/README.md.gotmpl in your repo to use your own template
+#   - If neither exists, the shared versions from .github/terraform/ are used
+name: 'Generate README'
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+
+jobs:
+  readme:
+    name: 'Generate README'
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout with full history so git describe can find the latest tag
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      # Install terraform-docs (parses .tf files) and gomplate (renders template)
+      - name: Install tools
+        run: |
+          brew install terraform-docs gomplate
+
+      # Use local generate script if present, otherwise download the shared one
+      - name: Generate README
+        run: |
+          if [ -f ./docs/generate-readme.sh ]; then
+            chmod +x ./docs/generate-readme.sh
+            ./docs/generate-readme.sh
+          else
+            curl -sL https://raw.githubusercontent.com/lsdopen/.github/main/.github/terraform/generate-readme.sh -o /tmp/generate-readme.sh
+            chmod +x /tmp/generate-readme.sh
+            /tmp/generate-readme.sh .
+          fi
+
+      # Validate no broken links in the generated README
+      - name: Validate links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          file-path: README.md
+          max-depth: 0
+
+      # Commit the regenerated README back to main (skip ci to avoid loops)
+      - name: Commit README
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "chore: regenerate README.md [skip ci]"
+          file_pattern: README.md
+          commit_user_name: "readme-bot"
+          commit_user_email: "actions@github.com"
+          commit_author: "readme-bot <actions@github.com>"
