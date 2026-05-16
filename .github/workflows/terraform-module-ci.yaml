@@ -49,7 +49,7 @@ jobs:
           echo "::notice::Using Terraform $version (minimum from versions.tf)"
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3.1.2
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ steps.tf-version.outputs.version }}
 
