@@ -3,11 +3,10 @@ name: 'Terraform Apply'
 on:
   workflow_call:
     inputs:
-      workflow:
-        description: 'Which workflow step to run.'
-        required: false
+      root:
+        description: 'The root module directory to apply.'
+        required: true
         type: string
-        default: ''
       runs-on:
         description: 'Agent selection string.'
         required: false
@@ -19,6 +18,10 @@ on:
         type: string
       aws-assume-role-region:
         description: 'The AWS region to assume IAM in for Terraform operations.'
+        required: true
+        type: string
+      environment:
+        description: 'GitHub environment for approval gates (must have required reviewers configured).'
         required: true
         type: string
       tailscale:
@@ -48,36 +51,42 @@ permissions:
   contents: read
 
 jobs:
-  terraform-apply:
-    name: 'Terraform Apply'
+  plan:
+    name: 'Plan: ${{ inputs.root }}'
     defaults:
       run:
         shell: bash
-        working-directory: './${{ inputs.workflow }}'
+        working-directory: './${{ inputs.root }}'
     runs-on: ${{ inputs.runs-on }}
     env:
       TF_IN_AUTOMATION: true
     steps:
-      - name: Sanity check
+      - name: Sanity Check
         if: github.ref != 'refs/heads/main'
-        run: echo 'Not running against 'main' branch, exiting.' && exit 1
+        run: echo "Not running against 'main' branch, exiting." && exit 1
+
       - name: Checkout
         uses: actions/checkout@v6
+
       - name: Read Terraform Version
         run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ inputs.aws-assume-role-arn }}
           aws-region: ${{ inputs.aws-assume-role-region }}
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3.1.2
         with:
           terraform_version: ${{ env.TF_VERSION }}
           cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
           terraform_wrapper: false
+
       - name: Initialize Terraform
         run: terraform init
+
       - name: Tailscale
         if: inputs.tailscale == true
         uses: tailscale/github-action@v4
@@ -86,5 +95,79 @@ jobs:
           oauth-secret: ${{ secrets.tailscale-secret }}
           tags: ${{ secrets.tailscale-tags }}
           version: 1.82.5
+
+      - name: Terraform Plan
+        run: |
+          ${{ secrets.terraform-env-vars }} terraform plan -input=false -out=tfplan 2>&1 | tee plan-output.txt
+
+      - name: Generate Plan Text
+        run: terraform show tfplan -no-color > plan-readable.txt
+
+      - name: Show Plan in Workflow Summary
+        run: |
+          echo "## Terraform Plan: \`${{ inputs.root }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```hcl' >> $GITHUB_STEP_SUMMARY
+          cat plan-readable.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ inputs.root }}
+          path: |
+            ./${{ inputs.root }}/tfplan
+            ./${{ inputs.root }}/plan-readable.txt
+          retention-days: 1
+
+  apply:
+    name: 'Apply: ${{ inputs.root }}'
+    needs: plan
+    runs-on: ${{ inputs.runs-on }}
+    environment: ${{ inputs.environment }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: './${{ inputs.root }}'
+    env:
+      TF_IN_AUTOMATION: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Read Terraform Version
+        run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ inputs.aws-assume-role-arn }}
+          aws-region: ${{ inputs.aws-assume-role-region }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3.1.2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
+          terraform_wrapper: false
+
+      - name: Initialize Terraform
+        run: terraform init
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ inputs.root }}
+          path: ./${{ inputs.root }}
+
+      - name: Tailscale
+        if: inputs.tailscale == true
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.tailscale-client-id }}
+          oauth-secret: ${{ secrets.tailscale-secret }}
+          tags: ${{ secrets.tailscale-tags }}
+          version: 1.82.5
+
       - name: Terraform Apply
-        run: ${{ secrets.terraform-env-vars }} terraform apply -auto-approve -input=false
+        run: ${{ secrets.terraform-env-vars }} terraform apply -input=false tfplan
