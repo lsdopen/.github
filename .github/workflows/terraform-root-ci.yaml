@@ -1,10 +1,10 @@
-name: 'Terraform Plan'
+name: 'Terraform CI'
 
 on:
   workflow_call:
     inputs:
-      root:
-        description: 'The root module directory to plan.'
+      roots:
+        description: 'JSON array of all root module directories to monitor (e.g. ["feature-a", "networking", "compute"]).'
         required: true
         type: string
       runs-on:
@@ -54,13 +54,128 @@ permissions:
   models: read
 
 jobs:
-  terraform-plan:
-    name: 'Plan: ${{ inputs.root }}'
+  detect-changes:
+    name: 'Detect Changed Roots'
+    runs-on: ${{ inputs.runs-on }}
+    outputs:
+      changed: ${{ steps.filter.outputs.changed }}
+      has_changes: ${{ steps.filter.outputs.has_changes }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect Changed Roots
+        id: filter
+        run: |
+          ROOTS='${{ inputs.roots }}'
+          CHANGED=()
+
+          # Determine diff base
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${{ github.sha }}"
+          fi
+
+          # Get list of changed files
+          CHANGED_FILES=$(git diff --name-only "$BASE" "$HEAD" 2>/dev/null || git diff --name-only HEAD~1 HEAD)
+
+          # Check each root for changes
+          for root in $(echo "$ROOTS" | jq -r '.[]'); do
+            if echo "$CHANGED_FILES" | grep -q "^${root}/"; then
+              CHANGED+=("\"${root}\"")
+            fi
+          done
+
+          # Build JSON output
+          if [ ${#CHANGED[@]} -eq 0 ]; then
+            echo "changed=[]" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            CHANGED_JSON=$(printf '%s\n' "${CHANGED[@]}" | jq -s -c '.')
+            echo "changed=${CHANGED_JSON}" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+          echo "### Changed Roots" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ ${#CHANGED[@]} -eq 0 ]; then
+            echo "No Terraform roots changed." >> $GITHUB_STEP_SUMMARY
+          else
+            for root in $(echo "$ROOTS" | jq -r '.[]'); do
+              if echo "$CHANGED_FILES" | grep -q "^${root}/"; then
+                echo "- ✅ \`${root}\`" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "- ⏭️ \`${root}\` (no changes)" >> $GITHUB_STEP_SUMMARY
+              fi
+            done
+          fi
+
+  lint:
+    name: 'Lint: ${{ matrix.root }}'
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changes == 'true'
+    runs-on: ${{ inputs.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        root: ${{ fromJson(needs.detect-changes.outputs.changed) }}
     defaults:
       run:
         shell: bash
-        working-directory: './${{ inputs.root }}'
+        working-directory: './${{ matrix.root }}'
+    env:
+      TF_IN_AUTOMATION: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Read Terraform Version
+        run: echo "TF_VERSION=$(cat .terraform-version)" >> $GITHUB_ENV
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ inputs.aws-assume-role-arn }}
+          aws-region: ${{ inputs.aws-assume-role-region }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3.1.2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
+
+      - name: Check Terraform Format
+        run: terraform fmt -check
+
+      - name: Initialize and Validate
+        run: terraform init && terraform validate
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v6
+
+      - name: Check Terraform Lint
+        run: tflint --init && tflint -f compact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  plan:
+    name: 'Plan: ${{ matrix.root }}'
+    needs: [detect-changes, lint]
+    if: needs.detect-changes.outputs.has_changes == 'true'
     runs-on: ${{ inputs.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        root: ${{ fromJson(needs.detect-changes.outputs.changed) }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: './${{ matrix.root }}'
     env:
       TF_IN_AUTOMATION: true
     steps:
@@ -109,11 +224,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tfplan-${{ inputs.root }}
+          name: tfplan-${{ matrix.root }}
           path: |
-            ./${{ inputs.root }}/tfplan
-            ./${{ inputs.root }}/plan-readable.txt
-            ./${{ inputs.root }}/plan-output.txt
+            ./${{ matrix.root }}/tfplan
+            ./${{ matrix.root }}/plan-readable.txt
+            ./${{ matrix.root }}/plan-output.txt
           retention-days: 7
 
       - name: AI Summary
@@ -142,11 +257,10 @@ jobs:
           github-token: ${{ github.token }}
           script: |
             const fs = require('fs');
-            const root = '${{ inputs.root }}';
+            const root = '${{ matrix.root }}';
             const planOutput = fs.readFileSync(`${root}/plan-readable.txt`, 'utf8');
             const aiSummary = `${{ steps.ai-summary.outputs.response }}` || '';
 
-            // Truncate plan if too long for a comment
             const maxLength = 60000;
             const truncated = planOutput.length > maxLength
               ? planOutput.substring(0, maxLength) + '\n\n... (truncated, see artifact for full plan)'
@@ -161,7 +275,6 @@ jobs:
             body += `<details>\n<summary>Plan output (click to expand)</summary>\n\n\`\`\`hcl\n${truncated}\n\`\`\`\n\n</details>\n\n`;
             body += `📦 Full plan available as [workflow artifact](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})`;
 
-            // Find existing comment for this root
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
