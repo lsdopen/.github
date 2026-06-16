@@ -42,7 +42,7 @@ jobs:
           role-to-assume: ${{ inputs.aws-assume-role-arn }}
           aws-region: ${{ inputs.aws-assume-role-region }}
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3.1.2
+        uses: hashicorp/setup-terraform@v4.0.0
         with:
           terraform_version: ${{ env.TF_VERSION }}
           cli_config_credentials_token: ${{ secrets.terraform-registry-token }}
