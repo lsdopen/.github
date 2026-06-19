@@ -30,7 +30,7 @@ optional=$(echo "$tf_json" | jq -r '
   .inputs | map(select(.required == false)) |
   if length > 0 then
     "### Optional Inputs\n\n| Name | Description | Type | Default |\n| ---- | ----------- | ---- | ------- |\n" +
-    (map("| <a name=\"input_\(.name)\"></a> [\(.name | gsub("_"; "\\_"))](##input\\_\(.name)) | \(.description | gsub("\n"; " ")) | `\(.type)` | `\(.default | tostring)` |") | join("\n"))
+    (map("| <a name=\"input_\(.name)\"></a> [\(.name | gsub("_"; "\\_"))](\\#input\\_\(.name)) | \(.description | gsub("\n"; " ")) | `\(.type)` | `\(.default | tostring)` |") | join("\n"))
   else "" end
 ')
 
@@ -39,7 +39,7 @@ outputs=$(echo "$tf_json" | jq -r '
   .outputs |
   if length > 0 then
     "## Outputs\n\n| Name | Description |\n| ---- | ----------- |\n" +
-    (map("| <a name=\"output_\(.name)\"></a> [\(.name | gsub("_"; "\\_"))](##output\\_\(.name)) | \(.description | gsub("\n"; " ")) |") | join("\n"))
+    (map("| <a name=\"output_\(.name)\"></a> [\(.name | gsub("_"; "\\_"))](\\#output\\_\(.name)) | \(.description | gsub("\n"; " ")) |") | join("\n"))
   else "" end
 ')
 
