@@ -30,7 +30,7 @@ optional=$(echo "$tf_json" | jq -r '
   .inputs | map(select(.required == false)) |
   if length > 0 then
     "### Optional Inputs\n\n| Name | Description | Type | Default |\n| ---- | ----------- | ---- | ------- |\n" +
-    (map("| <a name=\"input_\(.name)\"></a> [\(.name | gsub("_"; "\\_"))](\\#input\\_\(.name)) | \(.description | gsub("\n"; " ")) | `\(.type)` | `\(.default | tostring)` |") | join("\n"))
+    (map("| <a name=\"input_\(.name)\"></a> [\(.name | gsub("_"; "\\_"))](\\#input\\_\(.name)) | \(.description | gsub("\n"; " ")) | `\(.type | gsub("\n"; ""))` | `\(.default | tostring | gsub("\n"; ""))` |") | join("\n"))
   else "" end
 ')
 
