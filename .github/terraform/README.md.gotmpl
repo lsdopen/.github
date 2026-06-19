@@ -55,13 +55,15 @@ PRs are welcome. We follow the typical "fork-and-pull" Git workflow.
 5. Submit a **Pull Request** so that we can review your changes
 
 {{ if has (ds "config") "license" -}}
+{{ if eq (ds "config").license "APACHE2" -}}
 ## License
 
-{{ if eq (ds "config").license "APACHE2" -}}
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for full details.
 {{- else if eq (ds "config").license "MIT" -}}
+## License
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Licensed under the MIT License. See [LICENSE](LICENSE) for full details.
