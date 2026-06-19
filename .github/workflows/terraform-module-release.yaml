@@ -9,39 +9,31 @@
 #   - chore:/docs:/ci: → no release
 #
 # Creates a GitHub release with auto-generated changelog and tags the commit.
-name: 'Semantic Release'
+name: 'Release'
 
 on:
   workflow_call:
 
 permissions:
-  id-token: write
-  issues: write
-  pull-requests: write
   contents: write
 
 jobs:
-  semantic-release:
-    name: 'Semantic Release'
-    runs-on: 'ubuntu-latest'
-    defaults:
-      run:
-        shell: bash
+  release:
+    name: 'Release'
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+
       - name: Semantic Release
-        uses: docker://ghcr.io/codfish/semantic-release-action@sha256:4c0955361cf42e5ab9bb05df3a1e2a781c443f9760b63a68957689445051a2fb
-        with:
-          branches: |
-            [
-              "main"
-            ]
-          plugins: |
-            [
-              "@semantic-release/commit-analyzer",
-              "@semantic-release/release-notes-generator",
-              "@semantic-release/github",
-            ]
+        run: |
+          npx semantic-release \
+            --branches main \
+            --plugins @semantic-release/commit-analyzer \
+            --plugins @semantic-release/release-notes-generator \
+            --plugins @semantic-release/github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
