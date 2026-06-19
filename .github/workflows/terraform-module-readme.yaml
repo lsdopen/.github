@@ -53,8 +53,11 @@ jobs:
           fi
 
       # Validate no broken links in the generated README
+      # Ignore links to the repo itself (404 while private)
       - name: Validate links
-        run: npx markdown-link-check README.md
+        run: |
+          echo '{"ignorePatterns":[{"pattern":"^https://github.com/${{ github.repository }}"}]}' > /tmp/.mlc.json
+          npx markdown-link-check README.md --config /tmp/.mlc.json
 
       # Commit the regenerated README back to main
       - name: Commit README
