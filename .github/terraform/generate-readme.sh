@@ -21,7 +21,7 @@ required=$(echo "$tf_json" | jq -r '
   .inputs | map(select(.required == true)) |
   if length > 0 then
     "### Required Inputs\n\n| Name | Description | Type |\n| ---- | ----------- | ---- |\n" +
-    (map("| <a name=\"input_\(.name)\"></a> [\(.name | gsub("_"; "\\_"))](##input\\_\(.name)) | \(.description | gsub("\n"; " ")) | `\(.type)` |") | join("\n"))
+    (map("| <a name=\"input_\(.name)\"></a> [\(.name | gsub("_"; "\\_"))](\\#input\\_\(.name)) | \(.description | gsub("\n"; " ")) | `\(.type)` |") | join("\n"))
   else "" end
 ')
 
