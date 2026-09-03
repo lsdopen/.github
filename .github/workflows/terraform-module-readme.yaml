@@ -8,7 +8,7 @@
 #   - Latest version tag injected into usage example
 #
 # Overrides:
-#   - Place a custom docs/generate-readme.sh in your repo to use your own generation logic
+#   - Place a custom docs/generate-files.sh in your repo to use your own generation logic
 #   - Place a custom docs/README.md.gotmpl in your repo to use your own template
 #   - If neither exists, the shared versions from .github/terraform/ are used
 name: 'Generate README'
@@ -41,15 +41,15 @@ jobs:
           chmod +x /usr/local/bin/gomplate
 
       # Use local generate script if present, otherwise download the shared one
-      - name: Generate README
+      - name: Generate files
         run: |
-          if [ -f ./docs/generate-readme.sh ]; then
-            chmod +x ./docs/generate-readme.sh
-            ./docs/generate-readme.sh
+          if [ -f ./docs/generate-files.sh ]; then
+            chmod +x ./docs/generate-files.sh
+            ./docs/generate-files.sh
           else
-            curl -sL https://raw.githubusercontent.com/lsdopen/.github/main/.github/terraform/generate-readme.sh -o /tmp/generate-readme.sh
-            chmod +x /tmp/generate-readme.sh
-            /tmp/generate-readme.sh .
+            curl -sL https://raw.githubusercontent.com/lsdopen/.github/main/.github/terraform/generate-files.sh -o /tmp/generate-files.sh
+            chmod +x /tmp/generate-files.sh
+            /tmp/generate-files.sh .
           fi
 
       # Validate no broken links in the generated README
