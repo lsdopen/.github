@@ -110,9 +110,14 @@ jobs:
           format: sarif
           output: trivy.sarif
 
+      # SARIF upload is reporting, not gating: it only works when the repo has
+      # code scanning (GitHub Advanced Security on private repos, or a public
+      # repo). Keep it non-fatal so CI does not break where GHAS is absent — the
+      # Trivy Gate step below is the actual HIGH/CRITICAL blocker.
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
         if: always()
+        continue-on-error: true
         with:
           sarif_file: trivy.sarif
 
