@@ -8,13 +8,13 @@
 #      - If changes are needed, commits the fix and stops (saves CI minutes)
 #   3. Validates syntax with `terraform init` + `terraform validate`
 #   4. Lints with tflint using shared config from .github/terraform/tflint.hcl
-#   5. Security-scans with tfsec using shared config from .github/terraform/tfsec.yml
+#   5. Security-scans with Trivy (config mode) using shared config from .github/terraform/trivy.yaml
 #      - Uploads findings to the GitHub Security tab (SARIF)
 #      - Fails the build on HIGH/CRITICAL findings (MEDIUM/LOW are advisory)
 #
 # Overrides:
 #   - Place a .tflint.hcl in your module repo root to use custom lint rules
-#   - Place a .tfsec/config.yml in your module repo root to use custom tfsec config
+#   - Place a trivy.yaml in your module repo root to use custom Trivy config
 #   - The shared configs are only downloaded if no local equivalent exists
 name: 'Continuous Integration'
 
@@ -92,32 +92,37 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
-      # Security scanning with tfsec. Uses a module-local .tfsec/config.yml when
-      # present, otherwise the shared org default. Findings are uploaded to the
-      # GitHub Security tab as SARIF, and HIGH/CRITICAL findings fail the build.
-      - name: Fetch shared tfsec config
-        if: hashFiles('.tfsec/config.yml') == ''
-        run: |
-          mkdir -p .tfsec
-          curl -sL https://raw.githubusercontent.com/lsdopen/.github/main/.github/terraform/tfsec.yml -o .tfsec/config.yml
+      # Security scanning with Trivy (config/IaC mode). Uses a module-local
+      # trivy.yaml when present, otherwise the shared org default. Findings are
+      # uploaded to the GitHub Security tab as SARIF, and HIGH/CRITICAL findings
+      # fail the build.
+      - name: Fetch shared trivy config
+        if: hashFiles('trivy.yaml') == ''
+        run: curl -sL https://raw.githubusercontent.com/lsdopen/.github/main/.github/terraform/trivy.yaml -o trivy.yaml
 
-      - name: TFSec Security Scan (SARIF)
-        uses: aquasecurity/tfsec-sarif-action@v0.1.4
+      - name: Trivy Config Scan (SARIF)
+        uses: aquasecurity/trivy-action@0.28.0
         if: always()
         with:
-          config_file: .tfsec/config.yml
-          sarif_file: tfsec.sarif
+          scan-type: config
+          scan-ref: .
+          trivy-config: trivy.yaml
+          format: sarif
+          output: trivy.sarif
 
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: tfsec.sarif
+          sarif_file: trivy.sarif
 
-      - name: TFSec Gate (fail on HIGH/CRITICAL)
-        uses: aquasecurity/tfsec-action@v1.0.3
+      - name: Trivy Gate (fail on HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.28.0
         with:
-          config_file: .tfsec/config.yml
-          # Only HIGH and CRITICAL findings block the build; MEDIUM/LOW are
-          # visible in the Security tab but advisory.
-          additional_args: --minimum-severity HIGH
+          scan-type: config
+          scan-ref: .
+          trivy-config: trivy.yaml
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1'
+          # MEDIUM/LOW are visible in the Security tab via the SARIF step above
+          # but do not block the build.
