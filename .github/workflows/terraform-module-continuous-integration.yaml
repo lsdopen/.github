@@ -8,10 +8,14 @@
 #      - If changes are needed, commits the fix and stops (saves CI minutes)
 #   3. Validates syntax with `terraform init` + `terraform validate`
 #   4. Lints with tflint using shared config from .github/terraform/tflint.hcl
+#   5. Security-scans with Trivy (config mode) using shared config from .github/terraform/trivy.yaml
+#      - Uploads findings to the GitHub Security tab (SARIF)
+#      - Fails the build on HIGH/CRITICAL findings (MEDIUM/LOW are advisory)
 #
 # Overrides:
 #   - Place a .tflint.hcl in your module repo root to use custom lint rules
-#   - The shared config is only downloaded if no local .tflint.hcl exists
+#   - Place a trivy.yaml in your module repo root to use custom Trivy config
+#   - The shared configs are only downloaded if no local equivalent exists
 name: 'Continuous Integration'
 
 on:
@@ -28,6 +32,7 @@ permissions:
   issues: write
   pull-requests: write
   contents: write
+  security-events: write
 
 jobs:
   continuous-integration:
@@ -86,3 +91,38 @@ jobs:
         run: tflint --init && tflint -f compact
         env:
           GITHUB_TOKEN: ${{ github.token }}
+
+      # Security scanning with Trivy (config/IaC mode). Uses a module-local
+      # trivy.yaml when present, otherwise the shared org default. Findings are
+      # uploaded to the GitHub Security tab as SARIF, and HIGH/CRITICAL findings
+      # fail the build.
+      - name: Fetch shared trivy config
+        if: hashFiles('trivy.yaml') == ''
+        run: curl -sL https://raw.githubusercontent.com/lsdopen/.github/main/.github/terraform/trivy.yaml -o trivy.yaml
+
+      - name: Trivy Config Scan (SARIF)
+        uses: aquasecurity/trivy-action@0.28.0
+        if: always()
+        with:
+          scan-type: config
+          scan-ref: .
+          trivy-config: trivy.yaml
+          format: sarif
+          output: trivy.sarif
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy.sarif
+
+      - name: Trivy Gate (fail on HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: config
+          scan-ref: .
+          trivy-config: trivy.yaml
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1'
+          # MEDIUM/LOW are visible in the Security tab via the SARIF step above
+          # but do not block the build.

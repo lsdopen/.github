@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
-# Shared README generation script for all Terraform modules.
-# Source: https://raw.githubusercontent.com/lsdopen/.github/main/.github/terraform/generate-readme.sh
+# Shared file generation script for all Terraform modules.
+# Source: https://raw.githubusercontent.com/lsdopen/.github/main/.github/terraform/generate-files.sh
 #
-# Override: Place a custom docs/generate-readme.sh in your module repo to use instead.
+# Generates README.md from docs/README.yaml + terraform-docs, and drops the
+# canonical LICENSE and CONTRIBUTING.md into the module repo so every repo
+# carries them as dedicated files (single source of truth in .github/terraform/).
+#
+# Override: Place a custom docs/generate-files.sh in your module repo to use instead.
 set -euo pipefail
 
 MODULE_DIR="${1:-.}"
@@ -94,3 +98,11 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 else
   sed -i "s/__VERSION__/$MODULE_VERSION/g" "./README.md"
 fi
+
+# Drop the canonical LICENSE and CONTRIBUTING.md into the repo. These are org
+# canonical files (single source of truth in .github/terraform/), so they are
+# fetched unconditionally to keep every repo in sync — a repo needing a variant
+# should diverge deliberately by pinning its own copy and removing this sync.
+BASE_URL="https://raw.githubusercontent.com/lsdopen/.github/main/.github/terraform"
+curl -sL "$BASE_URL/LICENSE" -o "./LICENSE"
+curl -sL "$BASE_URL/CONTRIBUTING.md" -o "./CONTRIBUTING.md"

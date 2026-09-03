@@ -1,0 +1,32 @@
+# Shared Trivy configuration for LSD Open Terraform modules.
+#
+# This is the org default, fetched by terraform-module-continuous-integration.yaml
+# only when a module has no local trivy.yaml. Modules with module-specific needs
+# (extra ignores, different severity floor) should commit their own trivy.yaml,
+# which takes precedence.
+#
+# The reusable CI workflow runs two passes: a SARIF pass that reports MEDIUM and
+# above to the GitHub Security tab, and a gate pass that fails the build on
+# HIGH/CRITICAL only. Severity/exit-code for the gate are set in the workflow,
+# not here, so this file only carries scan scope and misconfig options.
+
+# IaC / config scanning only (no vuln/secret scanners for a Terraform module).
+scan:
+  scanners:
+    - misconfig
+  skip-dirs:
+    - "**/.terraform"
+
+misconfiguration:
+  # Include Terraform-relevant checks. terraform-plan is not used here; we scan
+  # HCL directly.
+  terraform:
+    exclude-downloaded-modules: true
+
+# Report passed checks too, for comprehensive Security-tab context.
+# (Severity filtering for the blocking gate is applied in the workflow.)
+severity:
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
