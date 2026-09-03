@@ -9,8 +9,10 @@
 #   3. Validates syntax with `terraform init` + `terraform validate`
 #   4. Lints with tflint using shared config from .github/terraform/tflint.hcl
 #   5. Security-scans with Trivy (config mode) using shared config from .github/terraform/trivy.yaml
-#      - Uploads findings to the GitHub Security tab (SARIF)
-#      - Fails the build on HIGH/CRITICAL findings (MEDIUM/LOW are advisory)
+#      - Fails the build on HIGH/CRITICAL findings (MEDIUM/LOW are advisory) on every repo
+#      - Additionally uploads findings to the GitHub Security tab (SARIF) on
+#        public repos only; code scanning needs GHAS on private repos, so the
+#        SARIF steps are skipped there (the blocking gate still runs)
 #
 # Overrides:
 #   - Place a .tflint.hcl in your module repo root to use custom lint rules
@@ -100,9 +102,16 @@ jobs:
         if: hashFiles('trivy.yaml') == ''
         run: curl -sL https://raw.githubusercontent.com/lsdopen/.github/main/.github/terraform/trivy.yaml -o trivy.yaml
 
+      # Code-scanning SARIF reporting is only available where GitHub code
+      # scanning exists: public repos, or private repos with GitHub Advanced
+      # Security. Both steps below are therefore gated on repo visibility — on a
+      # private repo without GHAS the upload API is unreachable, and the SARIF
+      # scan that feeds it would be a wasted second Trivy run. This is reporting
+      # only: the Trivy Gate step further down is the actual HIGH/CRITICAL
+      # blocker and runs unconditionally on every repo.
       - name: Trivy Config Scan (SARIF)
         uses: aquasecurity/trivy-action@v0.36.0
-        if: always()
+        if: always() && github.event.repository.private == false
         with:
           scan-type: config
           scan-ref: .
@@ -110,14 +119,9 @@ jobs:
           format: sarif
           output: trivy.sarif
 
-      # SARIF upload is reporting, not gating: it only works when the repo has
-      # code scanning (GitHub Advanced Security on private repos, or a public
-      # repo). Keep it non-fatal so CI does not break where GHAS is absent — the
-      # Trivy Gate step below is the actual HIGH/CRITICAL blocker.
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        continue-on-error: true
+        if: always() && github.event.repository.private == false
         with:
           sarif_file: trivy.sarif
 
