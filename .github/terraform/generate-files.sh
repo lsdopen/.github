@@ -99,10 +99,12 @@ else
   sed -i "s/__VERSION__/$MODULE_VERSION/g" "./README.md"
 fi
 
-# Drop the canonical LICENSE and CONTRIBUTING.md into the repo. These are org
-# canonical files (single source of truth in .github/terraform/), so they are
-# fetched unconditionally to keep every repo in sync — a repo needing a variant
-# should diverge deliberately by pinning its own copy and removing this sync.
+# Drop the canonical LICENSE, CONTRIBUTING.md and SECURITY.md into the repo.
+# These are org canonical files (single source of truth in .github/terraform/),
+# so they are fetched unconditionally to keep every repo in sync — a repo
+# needing a variant should diverge deliberately by pinning its own copy and
+# removing this sync.
 BASE_URL="https://raw.githubusercontent.com/lsdopen/.github/main/.github/terraform"
 curl -sL "$BASE_URL/LICENSE" -o "./LICENSE"
 curl -sL "$BASE_URL/CONTRIBUTING.md" -o "./CONTRIBUTING.md"
+curl -sL "$BASE_URL/SECURITY.md" -o "./SECURITY.md"
